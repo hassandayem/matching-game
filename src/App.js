@@ -1,43 +1,81 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import SingleCard from "./components/singleCard";
 
-const imagesCards = [
-  { src: "/images/helmet-1.png" },
-  { src: "/images/potion-1.png" },
-  { src: "/images/ring-1.png" },
-  { src: "/images/scroll-1.png" },
-  { src: "/images/shield-1.png" },
-  { src: "/images/sword-1.png" },
+const cardImages = [
+  { src: "/images/helmet-1.png", matched: false },
+  { src: "/images/potion-1.png", matched: false },
+  { src: "/images/ring-1.png", matched: false },
+  { src: "/images/scroll-1.png", matched: false },
+  { src: "/images/shield-1.png", matched: false },
+  { src: "/images/sword-1.png", matched: false },
 ];
 
 function App() {
   const [cards, setCards] = useState([]);
-  const [turn, setTurn] = useState(0);
+  const [turns, setTurns] = useState(0);
+  const [choiceOne, setChoiceOne] = useState(null);
+  const [choiceTwo, setChoiceTwo] = useState(null);
 
-  console.log(cards, turn);
-
-  // Shuffle Cards
-  const shufflCards = () => {
-    // Double the cards number in the array
-    const cards = [...imagesCards, ...imagesCards]
-      // Sort the cards randomly
-      .sort(() => Math.random() - 0.3)
-      // Give each card a random ID
+  // shuffle cards for new game
+  const shuffleCards = () => {
+    const shuffledCards = [...cardImages, ...cardImages]
+      .sort(() => Math.random() - 0.5)
       .map((card) => ({ ...card, id: Math.random() }));
 
-    setCards(cards);
-    setTurn(turn);
+    setCards(shuffledCards);
+    setTurns(0);
+  };
+
+  // handle a choice
+  const handleChoice = (card) => {
+    console.log(card);
+    choiceOne ? setChoiceTwo(card) : setChoiceOne(card);
+  };
+
+  // compare 2 selected cards
+  useEffect(() => {
+    if (choiceOne && choiceTwo) {
+      if (choiceOne.src === choiceTwo.src) {
+        setCards((prevCards) => {
+          return prevCards.map((card) => {
+            if (card.src === choiceOne.src) {
+              return { ...card, matched: true };
+            } else {
+              return card;
+            }
+          });
+        });
+        resetTurn();
+      } else {
+        setTimeout(() => resetTurn(), 1000);
+      }
+    }
+  }, [choiceOne, choiceTwo]);
+
+  console.log(cards);
+
+  // reset choices & increase turn
+  const resetTurn = () => {
+    setChoiceOne(null);
+    setChoiceTwo(null);
+    setTurns((prevTurns) => prevTurns + 1);
   };
 
   return (
     <div className="App">
-      <h1>Practice Your Memory</h1>
-      <button onClick={shufflCards}>New Game</button>
+      <h1>Magic Match</h1>
+      <button onClick={shuffleCards}>New Game</button>
+
       <div className="card-grid">
-        {cards.map((card) => {
-          return <SingleCard key={card.id} card={card} />;
-        })}
+        {cards.map((card) => (
+          <SingleCard
+            key={card.id}
+            card={card}
+            handleChoice={handleChoice}
+            flipped={card === choiceOne || card === choiceTwo || card.matched}
+          />
+        ))}
       </div>
     </div>
   );
